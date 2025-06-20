@@ -13,10 +13,13 @@ Minimo 3 sistemas deben estar implementado, donde tenemos la siguiente instrucci
 Cada equipo deberá seleccionar y configurar los sistemas reales, poblarlos con data de prueba y demostrar su integración. Algunos de los sistemas propuestos:
 
 * OpenMRS: Sistema de gestión de historias clínicas electrónicas.
-* Odoo ERP: Gestión administrativa (citas, facturación, inventario).
-* Zammad: Sistema de soporte y seguimiento de incidentes.
 * Keycloak: Gestión de identidad, SSO y control de acceso.
 * Nextcloud: Almacenamiento seguro de documentos médicos.
+
+Se creo un docker compose para poder tener las aplicaciones en un entorno de desarrollo compartido, donde se mostraran los siguientes endpoints para poder acceder a cada uno de los mismos
+* Keycloak: http://localhost:8080/
+* OpenMRS: http://localhost:8081/
+* Nextcloud: http://localhost:8082/
 
 ## Patrones de integración a aplicar
 * API RESTful / Invocación remota.

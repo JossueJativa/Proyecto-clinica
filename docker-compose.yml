@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:5.7
+    container_name: openmrs-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: openmrs
+      MYSQL_USER: openmrs
+      MYSQL_PASSWORD: openmrs
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  openmrs:
+    image: openmrs/openmrs-platform:2.7.0
+    container_name: openmrs
+    depends_on:
+      - mysql
+    ports:
+      - "8081:8080"
+    environment:
+      DB_DATABASE: openmrs
+      DB_HOST: mysql
+      DB_USERNAME: openmrs
+      DB_PASSWORD: openmrs
+    volumes:
+      - openmrs_data:/usr/local/tomcat/.OpenMRS
+    networks:
+      - openmrs_net
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.2.5
+    container_name: keycloak
+    command: start-dev
+    ports:
+      - "8080:8080"
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    networks:
+      - openmrs_net
+
+  nextcloud:
+    image: nextcloud
+    container_name: nextcloud
+    ports:
+      - "8082:80"
+    volumes:
+      - nextcloud_data:/var/www/html
+    depends_on:
+      - nextcloud_db
+    networks:
+      - openmrs_net
+
+  nextcloud_db:
+    image: mariadb
+    container_name: nextcloud-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: nextcloud
+      MYSQL_USER: nextcloud
+      MYSQL_PASSWORD: nextcloud
+    volumes:
+      - nextcloud_db_data:/var/lib/mysql
+    networks:
+      - openmrs_net
+
+volumes:
+  mysql_data:
+  openmrs_data:
+  nextcloud_data:
+  nextcloud_db_data:
+
+networks:
+  openmrs_net:
+    driver: bridge
