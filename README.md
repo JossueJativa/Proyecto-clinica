@@ -18,7 +18,7 @@ Cada equipo deberá seleccionar y configurar los sistemas reales, poblarlos con 
 
 Se creo un docker compose para poder tener las aplicaciones en un entorno de desarrollo compartido, donde se mostraran los siguientes endpoints para poder acceder a cada uno de los mismos
 * Keycloak: http://localhost:8080/
-* OpenMRS: http://localhost:8081/
+* OpenMRS: http://localhost:8081/openmrs/
 * Nextcloud: http://localhost:8082/
 * APIGateway: 
     - https://localhost:9443/devportal/
@@ -30,6 +30,7 @@ Se creo un docker compose para poder tener las aplicaciones en un entorno de des
 | Keycloack  | admin   | admin      |
 | WSO2       | admin   | admin      |
 | Nextcloud  | admin   | admin      |
+| OpenMRS    | admin   | Admin123   |
 
 ## Patrones de integración a aplicar
 * API RESTful / Invocación remota.
