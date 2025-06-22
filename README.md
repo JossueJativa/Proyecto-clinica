@@ -20,6 +20,16 @@ Se creo un docker compose para poder tener las aplicaciones en un entorno de des
 * Keycloak: http://localhost:8080/
 * OpenMRS: http://localhost:8081/
 * Nextcloud: http://localhost:8082/
+* APIGateway: 
+    - https://localhost:9443/devportal/
+    - https://localhost:9443/publisher
+
+## Credenciales de las aplicaciones
+| Aplicacion | Usuario | Contraseña |
+| ---------- | ------- | ---------- |
+| Keycloack  | admin   | admin      |
+| WSO2       | admin   | admin      |
+| Nextcloud  | admin   | admin      |
 
 ## Patrones de integración a aplicar
 * API RESTful / Invocación remota.
@@ -31,3 +41,12 @@ Se creo un docker compose para poder tener las aplicaciones en un entorno de des
     * Service Mesh (e.g., Istio, Linkerd)
     * Mensajería (e.g., RabbitMQ, Kafka)
 
+Al momento de necesitar por lo menos 3 servicios de patrones a integrar, se van a usar los siguientes:
+
+* API Restfull / Invocacion remota
+* Base de datos compartida ()
+* Seguridad y automatizacion (Keycloak)
+
+Y para ello vamos a integrar el *API Gateway* para centralizar todos los servicios en un solo punto de entrada
+
+Donde el API Gateway centraliza exposicion y seguridad de OpenMRS y Nextcloud
