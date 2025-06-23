@@ -1,37 +1,54 @@
 version: '3.8'
 
 services:
-  mysql:
-    image: mysql:5.7
-    container_name: openmrs-mysql
+  postgres_openmrs:
+    image: postgres:13
+    container_name: openmrs-postgres
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: openmrs
-      MYSQL_USER: openmrs
-      MYSQL_PASSWORD: openmrs
+      POSTGRES_DB: openmrs
+      POSTGRES_USER: openmrs
+      POSTGRES_PASSWORD: openmrs
     volumes:
-      - mysql_data:/var/lib/mysql
+      - openmrs_postgres_data:/var/lib/postgresql/data
+    networks:
+      - openmrs_db_net
 
   openmrs:
-    image: openmrs/openmrs-reference-application:2.13.0
+    image: openmrs/openmrs-platform:2.7.0
     container_name: openmrs
     depends_on:
-      - mysql
+      - postgres_openmrs
     ports:
       - "8081:8080"
     environment:
       DB_DATABASE: openmrs
-      DB_HOST: mysql:3306
+      DB_HOST: postgres_openmrs
+      DB_PORT: 5432
       DB_USERNAME: openmrs
       DB_PASSWORD: openmrs
-      MYSQL_ROOT_PASSWORD: root
-      WAIT_FOR_DB_CONTAINER: mysql
-      WAIT_FOR_DB_TIMEOUT: 600
+      DB_CREATE_TABLES: 'true'
+      DB_AUTO_UPDATE: 'true'
+      DB_TYPE: postgres
+      OMRS_CONFIG_CONNECTION_SERVER: postgres_openmrs
+      OMRS_CONFIG_CONNECTION_DATABASE: openmrs
+      OMRS_CONFIG_CONNECTION_USERNAME: openmrs
+      OMRS_CONFIG_CONNECTION_PASSWORD: openmrs
+      OMRS_CONFIG_CONNECTION_DRIVER: org.postgresql.Driver
+      OMRS_CONFIG_CONNECTION_URL: jdbc:postgresql://postgres_openmrs:5432/openmrs
     volumes:
       - openmrs_data:/usr/local/tomcat/.OpenMRS
     networks:
-      - openmrs_net
+      - openmrs_db_net
+
+  adminer:
+    image: adminer
+    container_name: adminer
+    restart: always
+    ports:
+      - "8083:8080"
+    networks:
+      - openmrs_db_net
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.2.5
@@ -43,7 +60,7 @@ services:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: admin
     networks:
-      - openmrs_net
+      - keycloak_net
 
   nextcloud:
     image: nextcloud
@@ -55,7 +72,7 @@ services:
     depends_on:
       - nextcloud_db
     networks:
-      - openmrs_net
+      - nextcloud_net
 
   nextcloud_db:
     image: mariadb
@@ -69,7 +86,7 @@ services:
     volumes:
       - nextcloud_db_data:/var/lib/mysql
     networks:
-      - openmrs_net
+      - nextcloud_net
 
   wso2apim:
     build:
@@ -82,11 +99,11 @@ services:
       - "8280:8280"
       - "8243:8243"
     networks:
-      - openmrs_net
+      - wso2apim_net
 
 volumes:
-  mysql_data:
   openmrs_data:
+  openmrs_postgres_data:
   nextcloud_data:
   nextcloud_db_data:
   wso2apim_deployment:
@@ -95,5 +112,11 @@ volumes:
   wso2apim_database:
 
 networks:
-  openmrs_net:
+  openmrs_db_net:
+    driver: bridge
+  keycloak_net:
+    driver: bridge
+  nextcloud_net:
+    driver: bridge
+  wso2apim_net:
     driver: bridge
