@@ -25,6 +25,7 @@ services:
       HOST: postgres_odoo
       USER: odoo
       PASSWORD: odoo
+      DB_NAME: postgres_odoo
     volumes:
       - odoo_data:/var/lib/odoo
       - odoo_addons:/mnt/extra-addons

@@ -12,13 +12,13 @@ Diseñar, desarrollar e implementar una solución de integración funcional y se
 Minimo 3 sistemas deben estar implementado, donde tenemos la siguiente instrucción:
 Cada equipo deberá seleccionar y configurar los sistemas reales, poblarlos con data de prueba y demostrar su integración. Algunos de los sistemas propuestos:
 
-* OpenMRS: Sistema de gestión de historias clínicas electrónicas.
+* OdooERP: Sistema de gestión de historias clínicas electrónicas.
 * Keycloak: Gestión de identidad, SSO y control de acceso.
 * Nextcloud: Almacenamiento seguro de documentos médicos.
 
 Se creo un docker compose para poder tener las aplicaciones en un entorno de desarrollo compartido, donde se mostraran los siguientes endpoints para poder acceder a cada uno de los mismos
 * Keycloak: http://localhost:8080/
-* OpenMRS: http://localhost:8081/openmrs/
+* OdooERP: http://localhost:8069/
 * Nextcloud: http://localhost:8082/
 * APIGateway: 
     - https://localhost:9443/devportal/
@@ -30,7 +30,7 @@ Se creo un docker compose para poder tener las aplicaciones en un entorno de des
 | Keycloack  | admin   | admin      |
 | WSO2       | admin   | admin      |
 | Nextcloud  | admin   | admin      |
-| OpenMRS    | admin   | Admin123   |
+| OdooERP    | Se crea en el inicio |
 
 ## Patrones de integración a aplicar
 * API RESTful / Invocación remota.
