@@ -28,7 +28,7 @@ services:
       DB_NAME: postgres_odoo
     volumes:
       - odoo_data:/var/lib/odoo
-      - odoo_addons:/mnt/extra-addons
+      - ./medical_documents_integration:/mnt/extra-addons/medical_documents_integration
     networks:
       - odoo_db_net
 
