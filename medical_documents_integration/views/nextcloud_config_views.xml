@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vista de formulario para configuración de Nextcloud -->
+    <record id="view_nextcloud_config_form" model="ir.ui.view">
+        <field name="name">nextcloud.config.form</field>
+        <field name="model">nextcloud.config</field>
+        <field name="arch" type="xml">
+            <form string="Configuración Nextcloud">
+                <header>
+                    <button name="test_connection" string="Probar Conexión" type="object" class="btn-primary"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="url" placeholder="http://nextcloud:80"/>
+                            <field name="username"/>
+                            <field name="password" password="True"/>
+                        </group>
+                        <group>
+                            <field name="active"/>
+                            <field name="connection_status"/>
+                            <field name="last_test"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vista de lista para configuraciones -->
+    <record id="view_nextcloud_config_tree" model="ir.ui.view">
+        <field name="name">nextcloud.config.tree</field>
+        <field name="model">nextcloud.config</field>
+        <field name="arch" type="xml">
+            <tree string="Configuraciones Nextcloud">
+                <field name="name"/>
+                <field name="url"/>
+                <field name="username"/>
+                <field name="active"/>
+                <field name="connection_status"/>
+                <field name="last_test"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Acción para abrir configuración -->
+    <record id="action_nextcloud_config" model="ir.actions.act_window">
+        <field name="name">Configuración Nextcloud</field>
+        <field name="type">ir.actions.act_window</field>
+        <field name="res_model">nextcloud.config</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crear la primera configuración de Nextcloud
+            </p>
+            <p>
+                Configure aquí los parámetros de conexión a Nextcloud para la subida automática de documentos.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menú -->
+    <menuitem id="menu_nextcloud_config" 
+              name="Configuración Nextcloud" 
+              parent="base.menu_administration" 
+              action="action_nextcloud_config" 
+              sequence="100"/>
+
+    <!-- Vista heredada de facturas para mostrar campos de Nextcloud -->
+    <record id="view_move_form_nextcloud" model="ir.ui.view">
+        <field name="name">account.move.form.nextcloud</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Nextcloud" groups="base.group_user">
+                    <group>
+                        <field name="nextcloud_uploaded"/>
+                        <field name="nextcloud_url" widget="url"/>
+                    </group>
+                    <div class="oe_button_box">
+                        <button name="action_upload_to_nextcloud" 
+                                string="Subir a Nextcloud" 
+                                type="object" 
+                                class="btn-primary"
+                                attrs="{'invisible': [('nextcloud_uploaded', '=', True)]}"/>
+                        <button name="action_view_in_nextcloud" 
+                                string="Ver en Nextcloud" 
+                                type="object" 
+                                class="btn-secondary"
+                                attrs="{'invisible': [('nextcloud_uploaded', '=', False)]}"/>
+                    </div>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>
