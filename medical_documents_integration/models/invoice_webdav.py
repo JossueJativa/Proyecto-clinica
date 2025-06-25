@@ -30,8 +30,8 @@ class AccountMove(models.Model):
             config_model = self.env['nextcloud.config']
             config = config_model.get_active_config()
             
-            if not config or config.connection_status != 'success':
-                _logger.warning("Configuración de Nextcloud no disponible o con errores")
+            if not config:
+                _logger.warning("No hay configuración de Nextcloud disponible")
                 return
             
             # Generar PDF de la factura
