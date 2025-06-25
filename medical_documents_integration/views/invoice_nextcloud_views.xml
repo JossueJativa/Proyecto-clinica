@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Vista heredada de facturas para mostrar campos de Nextcloud -->
+    <record id="view_move_form_nextcloud" model="ir.ui.view">
+        <field name="name">account.move.form.nextcloud</field>
+        <field name="model">account.move</field>
+        <field name="inherit_id" ref="account.view_move_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Nextcloud" groups="base.group_user">
+                    <group>
+                        <field name="nextcloud_uploaded"/>
+                        <field name="nextcloud_url" widget="url"/>
+                    </group>
+                    <div class="oe_button_box">
+                        <button name="action_upload_to_nextcloud" 
+                                string="Subir a Nextcloud" 
+                                type="object" 
+                                class="btn-primary"
+                                attrs="{'invisible': [('nextcloud_uploaded', '=', True)]}"/>
+                        <button name="action_view_in_nextcloud" 
+                                string="Ver en Nextcloud" 
+                                type="object" 
+                                class="btn-secondary"
+                                attrs="{'invisible': [('nextcloud_uploaded', '=', False)]}"/>
+                    </div>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>
