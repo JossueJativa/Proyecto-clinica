@@ -59,7 +59,7 @@ Donde el API Gateway centraliza exposicion y seguridad de OpenMRS y Nextcloud
 #### 🔧 **Patrón aplicado:** API RESTful / Invocación remota
 
 #### 🧩 **Problema que resuelve:**
-Cuando se genera una factura, receta médica o historial clínico en Odoo, no existe un repositorio centralizado donde almacenar estos documentos de forma segura y accesible.
+Cuando se genera una factura o historial clínico en Odoo, no existe un repositorio centralizado donde almacenar estos documentos de forma segura y accesible.
 
 #### 🛠️ **Solución técnica:**
 - Utilizar la **API WebDAV de Nextcloud** para subir automáticamente documentos generados desde Odoo
