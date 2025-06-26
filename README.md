@@ -20,16 +20,14 @@ Se creo un docker compose para poder tener las aplicaciones en un entorno de des
 * Keycloak: http://localhost:8080/
 * OdooERP: http://localhost:8069/web?debug=1
 * Nextcloud: http://localhost:8082/
-* APIGateway: 
-    - https://localhost:9443/devportal/
-    - https://localhost:9443/publisher
+* RabbitMQ: http://localhost:15672
 
 ## Credenciales de las aplicaciones
 | Aplicacion | Usuario | Contraseña |
 | ---------- | ------- | ---------- |
 | Keycloack  | admin   | admin      |
-| WSO2       | admin   | admin      |
 | Nextcloud  | admin   | admin      |
+| RabitMQ    | admin   | admin      |
 | OdooERP    | Se crea en el inicio |
 
 ## Patrones de integración a aplicar
@@ -44,8 +42,8 @@ Se creo un docker compose para poder tener las aplicaciones en un entorno de des
 
 Al momento de necesitar por lo menos 3 servicios de patrones a integrar, se van a usar los siguientes:
 
-* API Restfull / Invocacion remota
-* Base de datos compartida ()
+* Mensajeria por colas
+* Base de datos compartida
 * Seguridad y automatizacion (Keycloak)
 
 Y para ello vamos a integrar el *API Gateway* para centralizar todos los servicios en un solo punto de entrada
