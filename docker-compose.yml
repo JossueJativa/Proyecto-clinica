@@ -15,7 +15,7 @@ services:
       - odoo_db_net
 
   odoo:
-    image: odoo:17
+    image: odoo:18
     container_name: odoo
     depends_on:
       - postgres_odoo
