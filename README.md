@@ -96,56 +96,7 @@ Cuando se genera una factura o historial clínico en Odoo, no existe un reposito
 
 ---
 
-### 🔹 **2. Integración SSO con Keycloak - Autenticación Unificada**
-
-#### 🔧 **Patrón aplicado:** Seguridad y automatización (Keycloak)
-
-#### 🧩 **Problema que resuelve:**
-Los usuarios deben autenticarse múltiples veces en cada sistema (Odoo, Nextcloud, WSO2), generando ineficiencia y problemas de gestión de credenciales.
-
-#### 🛠️ **Solución técnica:**
-- Configurar Keycloak como Identity Provider (IdP) central
-- Implementar OpenID Connect/OAuth2 en todos los sistemas
-- Gestión centralizada de usuarios, roles y permisos
-
-#### 📋 **Pasos de implementación:**
-
-1. **Configuración de Keycloak:**
-   ```
-   Realm: clinica-realm
-   Clients:
-   ├── odoo-client (OpenID Connect)
-   ├── nextcloud-client (OpenID Connect)
-   └── wso2-client (SAML/OpenID Connect)
-   
-   Roles:
-   ├── medico
-   ├── enfermero
-   ├── administrativo
-   └── paciente
-   ```
-
-2. **Configuración en Odoo:**
-   - Instalar addon `auth_oauth`
-   - Configurar proveedor OAuth2 apuntando a Keycloak
-   - Mapear roles de Keycloak a grupos de Odoo
-
-3. **Configuración en Nextcloud:**
-   - Habilitar app "Social Login"
-   - Configurar OpenID Connect provider
-   - Establecer mapeo de usuarios y grupos
-
-4. **Configuración en WSO2 API Manager:**
-   - Configurar Key Manager externo (Keycloak)
-   - Implementar JWT token validation
-   - Configurar RBAC basado en roles de Keycloak
-
-#### 🧪 **Prueba funcional:**
-- Usuario accede a cualquier sistema → Redirección a Keycloak → Autenticación única → Acceso a todos los sistemas sin re-login
-
----
-
-### 🔹 **3. Integración Base de Datos Compartida - Sincronización de Datos**
+### 🔹 **2. Integración Base de Datos Compartida - Sincronización de Datos**
 
 #### 🔧 **Patrón aplicado:** Base de datos compartida
 

@@ -79,18 +79,21 @@ services:
     networks:
       - nextcloud_net
 
-  wso2apim:
-    build:
-      context: .
-      dockerfile: Dockerfile-wso2
-    image: mi-wso2am:4.1.0
-    container_name: wso2apim
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: rabbitmq
     ports:
-      - "9443:9443"
-      - "8280:8280"
-      - "8243:8243"
+      - "5672:5672"    # Puerto AMQP para apps
+      - "15672:15672"  # Puerto web de administración
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
     networks:
-      - wso2apim_net
+      - rabbitmq_net
+
+
 
 volumes:
   odoo_data:
@@ -98,10 +101,7 @@ volumes:
   odoo_addons:
   nextcloud_data:
   nextcloud_db_data:
-  wso2apim_deployment:
-  wso2apim_conf:
-  wso2apim_resources:
-  wso2apim_database:
+  rabbitmq_data:
 
 networks:
   odoo_db_net:
@@ -110,5 +110,5 @@ networks:
     driver: bridge
   nextcloud_net:
     driver: bridge
-  wso2apim_net:
+  rabbitmq_net:
     driver: bridge
