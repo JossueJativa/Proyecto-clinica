@@ -14,7 +14,7 @@ Cada equipo deberá seleccionar y configurar los sistemas reales, poblarlos con 
 
 * OdooERP: Sistema de gestión de historias clínicas electrónicas.
 * Keycloak: Gestión de identidad, SSO y control de acceso.
-* Nextcloud: Almacenamiento seguro de documentos médicos.
+* Google Drive: Almacenamiento seguro de backups automáticos de Odoo.
 
 Se creo un docker compose para poder tener las aplicaciones en un entorno de desarrollo compartido, donde se mostraran los siguientes endpoints para poder acceder a cada uno de los mismos
 * Keycloak: http://localhost:8080/
@@ -51,45 +51,39 @@ Donde el API Gateway centraliza exposición y seguridad de Odoo, Nextcloud y ser
 
 ## Soluciones de Integración Implementadas
 
-### 🔹 **1. Integración Odoo + Nextcloud - Almacenamiento Automático de Documentos**
+### 🔹 **1. Integración Odoo + Google Drive - Backups Automáticos**
 
 #### 🔧 **Patrón aplicado:** API RESTful / Invocación remota
 
 #### 🧩 **Problema que resuelve:**
-Cuando se genera una factura o historial clínico en Odoo, no existe un repositorio centralizado donde almacenar estos documentos de forma segura y accesible.
+Los backups de Odoo no estaban centralizados ni seguros, exponiendo a la clínica a pérdida de información crítica.
 
 #### 🛠️ **Solución técnica:**
-- Utilizar la **API WebDAV de Nextcloud** para subir automáticamente documentos generados desde Odoo
-- Organizar archivos por paciente, fecha y tipo de documento
-- Mantener trazabilidad entre registro de Odoo y archivo en Nextcloud
+- Se utiliza el módulo **"Automatic Database Backup To Local Server, Remote Server, Google Drive, Dropbox, Onedrive, Nextcloud and Amazon S3 Odoo18"** para realizar backups automáticos y almacenarlos directamente en Google Drive.
+- Configurar Odoo para realizar backups automáticos y almacenarlos directamente en Google Drive usando la API oficial.
+- Autenticación OAuth2 para acceso seguro a la cuenta de Google Drive.
+- Organización de backups por fecha y tipo de respaldo.
 
 #### 📋 **Pasos de implementación:**
 
-1. **Configuración de Nextcloud:**
-   ```bash
-   # Crear carpeta estructura para documentos médicos
-   /Documentos_Clinicos/
-   ├── Pacientes/
-   │   ├── [ID_Paciente]/
-   │   │   ├── Facturas/
-   │   │   ├── Recetas/
-   │   │   └── Historiales/
-   ```
+1. **Configuración de Google Drive:**
+   - Crear proyecto en Google Cloud Platform y habilitar API de Google Drive.
+   - Configurar credenciales OAuth2 y obtener tokens de acceso.
+   - Crear carpeta específica para backups de Odoo.
 
 2. **Desarrollo en Odoo:**
-   - Crear módulo personalizado `medical_documents_integration`
-   - Implementar servicio WebDAV client para comunicación con Nextcloud
-   - Hook en eventos de generación de PDF (facturas, recetas)
+   - Instalar módulo de integración con Google Drive (`google_drive` o personalizado).
+   - Configurar credenciales y carpeta destino en Odoo.
+   - Programar backups automáticos y subida vía API.
 
 3. **Flujo de integración:**
    ```
-   Odoo genera PDF → API WebDAV PUT → Nextcloud almacena → 
-   → Retorna URL → Odoo guarda referencia en BD
+   Odoo genera backup → API Google Drive → Backup almacenado en la nube → Odoo guarda referencia/URL
    ```
 
 #### 🧪 **Prueba funcional:**
-- Generar factura en Odoo → PDF se sube automáticamente a Nextcloud/Documentos_Clinicos/Pacientes/[ID]/Facturas/
-- El usuario puede acceder al documento desde ambos sistemas
+- Generar backup manual o automático en Odoo → Archivo aparece en Google Drive en la carpeta correspondiente.
+- Restaurar backup desde Google Drive si es necesario.
 
 ---
 
@@ -146,12 +140,12 @@ Los datos de pacientes, citas y medicamentos están aislados en Odoo, impidiendo
 
 ---
 
-### 🔹 **3. Integración Odoo + RabbitMQ + Nextcloud - Mensajería por Colas**
+### 🔹 **3. Integración Odoo + RabbitMQ - Mensajería por Colas**
 
 #### 🔧 **Patrón aplicado:** Mensajería por colas (RabbitMQ)
 
 #### 🧩 **Problema que resuelve:**
-El sistema actual de subida de documentos desde Odoo a Nextcloud es síncrono, causando bloqueos en la interfaz de usuario cuando hay documentos grandes o problemas de conectividad. Además, no hay tolerancia a fallos ni reintentos automáticos.
+El sistema actual de subida de documentos desde Odoo es síncrono, causando bloqueos en la interfaz de usuario cuando hay documentos grandes o problemas de conectividad. Además, no hay tolerancia a fallos ni reintentos automáticos.
 
 #### 🛠️ **Solución técnica:**
 - Utilizar **RabbitMQ** como broker de mensajes para desacoplar la generación de documentos de su almacenamiento
@@ -196,7 +190,7 @@ El sistema actual de subida de documentos desde Odoo a Nextcloud es síncrono, c
    # Servicio independiente que consume mensajes y procesa documentos
    def process_document_message(message):
        # 1. Descargar documento temporal de Odoo
-       # 2. Subir a Nextcloud via WebDAV
+       # 2. Procesar documento
        # 3. Actualizar Odoo con URL final
        # 4. Enviar notificación de completado
    ```
@@ -204,13 +198,13 @@ El sistema actual de subida de documentos desde Odoo a Nextcloud es síncrono, c
 4. **Flujo de integración asíncrono:**
    ```
    Odoo genera PDF → Envía mensaje a RabbitMQ → 
-   → Consumer procesa → Sube a Nextcloud → 
+   → Consumer procesa → Almacena documento → 
    → Notifica completado → Odoo actualiza estado
    ```
 
 #### 🧪 **Prueba funcional:**
-- Generar 10 facturas simultáneamente en Odoo → Procesamiento asíncrono → Todas se almacenan en Nextcloud sin bloquear la interfaz
-- Simular fallo de Nextcloud → Mensajes se reencolan automáticamente → Reintentos exitosos
+- Generar 10 facturas simultáneamente en Odoo → Procesamiento asíncrono → Todas se almacenan sin bloquear la interfaz
+- Simular fallo de almacenamiento → Mensajes se reencolan automáticamente → Reintentos exitosos
 
 ---
 
@@ -317,54 +311,65 @@ El inventario de medicamentos y suministros médicos está únicamente en Odoo, 
 ## Arquitectura de Integración Completa
 
 ```
-                    ┌─────────────┐    ┌─────────────┐
-                    │   Keycloak  │────│ WSO2 Gateway│
-                    │    (SSO)    │    │             │
-                    └─────┬───────┘    └─────┬───────┘
-                          │                  │
-              ┌───────────┼──────────────────┼───────────┐
-              │           │                  │           │
-              ▼           ▼                  ▼           ▼
-    ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
-    │    Odoo     │  │  Nextcloud  │  │  RabbitMQ   │  │ Dashboard   │
-    │   (ERP)     │  │ (Storage)   │  │ (Message    │  │ Farmacia    │
-    └─────┬───────┘  └─────────────┘  │  Broker)    │  └─────┬───────┘
-          │                           └─────┬───────┘        │
-          │          ┌─────────────────────┘                 │
-          │          │                                       │
-          │          ▼                                       │
-          │    ┌─────────────┐                               │
-          │    │ Document    │                               │
-          │    │ Processor   │                               │
-          │    │ Service     │                               │
-          │    └─────┬───────┘                               │
-          │          │                                       │
-          └──────────┼───────────────────────────────────────┘
-                     ▼
-             ┌─────────────┐
-             │ PostgreSQL  │
-             │ Compartida  │
-             │ (Inventario)│
-             └─────────────┘
+                ┌─────────────┐    ┌─────────────┐
+                │   Keycloak  │────│ WSO2 Gateway│
+                │    (SSO)    │    │             │
+                └─────┬───────┘    └─────┬───────┘
+                      │                  │
+          ┌───────────┼──────────────────┼───────────┐
+          │           │                  │           │
+          ▼           ▼                  ▼           ▼
+┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
+│    Odoo     │                │  │  RabbitMQ   │  │ Dashboard   │
+│   (ERP)     │                │  │ (Message    │  │ Farmacia    │
+└─────┬───────┘                │  │  Broker)    │  └─────┬───────┘
+      │                        └─────┬───────┘        │
+      │          ┌─────────────────────┘              │
+      │          │                                    │
+      │          ▼                                    │
+      │    ┌─────────────┐                            │
+      │    │ Document    │                            │
+      │    │ Processor   │                            │
+      │    │ Service     │                            │
+      │    └─────┬───────┘                            │
+      │          │                                    │
+      └──────────┼────────────────────────────────────┘
+                 ▼
+         ┌─────────────┐
+         │ PostgreSQL  │
+         │ Compartida  │
+         │ (Inventario)│
+         └─────────────┘
+         │
+         ▼
+   ┌─────────────┐
+   │ Google Drive│
+   │ (Backups)   │
+   └─────────────┘
 ```
 
 ### Flujos de Integración:
 
-1. **Flujo de Documentos Asíncrono:**
+1. **Flujo de Backups Automáticos:**
    ```
-   Odoo → RabbitMQ → Document Processor → Nextcloud
+   Odoo → Google Drive (API REST) → Backup seguro en la nube
+   ```
+
+2. **Flujo de Documentos Asíncrono:**
+   ```
+   Odoo → RabbitMQ → Document Processor → Almacenamiento
                   ↓
               Notification Queue → Odoo (actualización estado)
    ```
 
-2. **Flujo de Sincronización de Inventario:**
+3. **Flujo de Sincronización de Inventario:**
    ```
    Odoo (cambio stock) → PostgreSQL Compartida → Dashboard Farmacia
                                               ↓
                                          API REST → Sistemas externos
    ```
 
-3. **Flujo de Autenticación:**
+4. **Flujo de Autenticación:**
    ```
    Usuario → API Gateway → Keycloak (SSO) → Sistemas autorizados
    ```
@@ -373,14 +378,12 @@ El inventario de medicamentos y suministros médicos está únicamente en Odoo, 
 
 ### Desarrollo e Integración:
 - **Odoo Custom Modules**: Python
-- **WebDAV Client**: Requests library
 - **ETL Service**: Node.js/Express
 - **Dashboard**: React + Chart.js
 - **Base de datos**: PostgreSQL
 
 ### APIs y Protocolos:
 - **REST API**: Para comunicación entre servicios
-- **WebDAV**: Para transferencia de archivos
 - **OpenID Connect**: Para SSO
 - **JWT**: Para tokens de autenticación
 
@@ -407,13 +410,13 @@ docker cp ./odoo-addons odoo:/mnt/extra-addons/
 
 ### 4. Verificar integraciones:
 - Test SSO entre sistemas
-- Verificar subida de documentos Odoo → Nextcloud
+- Verificar subida de documentos Odoo → Google Drive
 - Comprobar sincronización de datos
 
 ## Métricas de Éxito
 
 - ✅ **Reducción del 80% en tiempo de login** (SSO implementado)
-- ✅ **100% de documentos centralizados** (Integración Odoo-Nextcloud)
+- ✅ **100% de documentos centralizados** (Integración Odoo-Drive)
 - ✅ **Procesamiento asíncrono de documentos** (RabbitMQ - 0% bloqueos de UI)
 - ✅ **Inventario sincronizado en < 2 segundos** (Base de datos compartida)
 - ✅ **Sistema tolerante a fallos** (Reintentos automáticos con RabbitMQ)
@@ -423,7 +426,7 @@ docker cp ./odoo-addons odoo:/mnt/extra-addons/
 
 | # | Solución | Patrón | Sistemas Integrados | Problema Resuelto |
 |---|----------|--------|-------------------|-------------------|
-| 1 | Almacenamiento Automático | API RESTful/WebDAV | Odoo ↔ Nextcloud | Centralización de documentos |
+| 1 | Backups Automáticos | API RESTful/Google Drive | Odoo ↔ Google Drive | Backups centralizados y seguros |
 | 2 | Sincronización de Pacientes | Base datos compartida | Odoo ↔ Dashboard | Datos duplicados y desactualizados |
-| 3 | Procesamiento Asíncrono | Mensajería (RabbitMQ) | Odoo → Queue → Nextcloud | Bloqueos de interfaz y fallos |
+| 3 | Procesamiento Asíncrono | Mensajería (RabbitMQ) | Odoo → Queue | Bloqueos de interfaz y fallos |
 | 4 | Inventario Compartido | Base datos compartida | Odoo ↔ Farmacia Dashboard | Acceso en tiempo real a stock |
