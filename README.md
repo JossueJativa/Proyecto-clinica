@@ -19,14 +19,12 @@ Cada equipo deberá seleccionar y configurar los sistemas reales, poblarlos con 
 Se creo un docker compose para poder tener las aplicaciones en un entorno de desarrollo compartido, donde se mostraran los siguientes endpoints para poder acceder a cada uno de los mismos
 * Keycloak: http://localhost:8080/
 * OdooERP: http://localhost:8069/web?debug=1
-* Nextcloud: http://localhost:8082/
 * RabbitMQ: http://localhost:15672
 
 ## Credenciales de las aplicaciones
 | Aplicacion | Usuario | Contraseña |
 | ---------- | ------- | ---------- |
 | Keycloack  | admin   | admin      |
-| Nextcloud  | admin   | admin      |
 | RabitMQ    | admin   | admin      |
 | OdooERP    | Se crea en el inicio |
 

@@ -12,13 +12,14 @@ services:
     volumes:
       - odoo_postgres_data:/var/lib/postgresql/data
     networks:
-      - odoo_db_net
+      - proyecto_net
 
   odoo:
     image: odoo:18
     container_name: odoo
     depends_on:
       - postgres_odoo
+    restart: always
     ports:
       - "8069:8069"
     environment:
@@ -29,8 +30,9 @@ services:
     volumes:
       - odoo_data:/var/lib/odoo
       - odoo_addons:/mnt/extra-addons
+      - odoo_logs:/var/log/odoo
     networks:
-      - odoo_db_net
+      - proyecto_net
 
   adminer:
     image: adminer
@@ -38,77 +40,56 @@ services:
     restart: always
     ports:
       - "8083:8080"
+    volumes:
+      - adminer_data:/var/www/html
     networks:
-      - odoo_db_net
+      - proyecto_net
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.2.5
     container_name: keycloak
     command: start-dev
+    restart: always
     ports:
       - "8080:8080"
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: admin
-    networks:
-      - keycloak_net
-
-  nextcloud:
-    image: nextcloud
-    container_name: nextcloud
-    ports:
-      - "8082:80"
+      KC_DB: dev-file
     volumes:
-      - nextcloud_data:/var/www/html
-    depends_on:
-      - nextcloud_db
+      - keycloak_data:/opt/keycloak/data
     networks:
-      - nextcloud_net
-
-  nextcloud_db:
-    image: mariadb
-    container_name: nextcloud-db
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: nextcloud
-      MYSQL_USER: nextcloud
-      MYSQL_PASSWORD: nextcloud
-    volumes:
-      - nextcloud_db_data:/var/lib/mysql
-    networks:
-      - nextcloud_net
+      - proyecto_net
 
   rabbitmq:
     image: rabbitmq:3.13-management
     container_name: rabbitmq
+    restart: always
     ports:
-      - "5672:5672"    # Puerto AMQP para apps
-      - "15672:15672"  # Puerto web de administración
+      - "5672:5672"
+      - "15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: admin
       RABBITMQ_DEFAULT_PASS: admin
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     networks:
-      - rabbitmq_net
-
-
-
-volumes:
-  odoo_data:
-  odoo_postgres_data:
-  odoo_addons:
-  nextcloud_data:
-  nextcloud_db_data:
-  rabbitmq_data:
+      - proyecto_net
 
 networks:
-  odoo_db_net:
+  proyecto_net:
     driver: bridge
-  keycloak_net:
-    driver: bridge
-  nextcloud_net:
-    driver: bridge
-  rabbitmq_net:
-    driver: bridge
+
+volumes:
+  odoo_postgres_data:
+  odoo_data:
+  odoo_addons:
+  rabbitmq_data:
+    driver: local
+  keycloak_data:
+    driver: local
+  adminer_data:
+    driver: local
+  odoo_logs:
+    driver: local
+
