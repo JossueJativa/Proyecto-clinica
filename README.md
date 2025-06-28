@@ -87,56 +87,45 @@ Los backups de Odoo no estaban centralizados ni seguros, exponiendo a la clínic
 
 ---
 
-### 🔹 **2. Integración Base de Datos Compartida - Sincronización de Datos**
+### 🔹 **2. Integración Odoo + Keycloak - SSO y Gestión Centralizada de Usuarios**
 
-#### 🔧 **Patrón aplicado:** Base de datos compartida
+#### 🔧 **Patrón aplicado:** Seguridad y autorización con SSO (Single Sign-On)
 
 #### 🧩 **Problema que resuelve:**
-Los datos de pacientes, citas y medicamentos están aislados en Odoo, impidiendo análisis, reportes y sincronización con otros sistemas.
+La gestión de usuarios y autenticación estaba fragmentada entre los sistemas, obligando a los usuarios a recordar múltiples credenciales y dificultando la administración centralizada de accesos y permisos.
 
 #### 🛠️ **Solución técnica:**
-- Crear base de datos centralizada para datos compartidos
-- Implementar ETL para sincronización bidireccional
-- Establecer API de datos para acceso controlado
+- Integrar Odoo con Keycloak como proveedor de identidad (IdP) usando el protocolo OAuth2/OpenID Connect.
+- Permitir que los usuarios inicien sesión en Odoo utilizando sus credenciales de Keycloak.
+- Centralizar la gestión de usuarios, roles y permisos desde Keycloak.
+- Sincronizar automáticamente los usuarios de Keycloak con Odoo para facilitar la administración.
 
 #### 📋 **Pasos de implementación:**
 
-1. **Base de datos compartida:**
-   ```sql
-   CREATE DATABASE clinica_shared;
-   
-   -- Tablas sincronizadas
-   CREATE TABLE shared_patients (
-       id SERIAL PRIMARY KEY,
-       odoo_id INTEGER,
-       name VARCHAR(255),
-       email VARCHAR(255),
-       phone VARCHAR(50),
-       last_sync TIMESTAMP
-   );
-   
-   CREATE TABLE shared_appointments (
-       id SERIAL PRIMARY KEY,
-       patient_id INTEGER,
-       datetime TIMESTAMP,
-       status VARCHAR(50),
-       doctor_name VARCHAR(255)
-   );
+1. **Configuración de Keycloak:**
+   - Crear un nuevo cliente para Odoo en el panel de administración de Keycloak.
+   - Configurar el cliente con el flujo de autenticación adecuado (por ejemplo, Authorization Code Flow).
+   - Definir los roles y grupos necesarios para Odoo.
+
+2. **Configuración en Odoo:**
+   - Instalar el módulo de autenticación OAuth2/OpenID Connect (`auth_oidc` o similar).
+   - Configurar la URL de Keycloak, el client ID y el client secret en Odoo.
+   - Habilitar el login mediante SSO en la pantalla de acceso de Odoo.
+
+3. **Sincronización de usuarios:**
+   - Configurar la importación automática de usuarios y grupos desde Keycloak a Odoo (opcional, según módulo).
+   - Asignar roles y permisos en Odoo basados en los grupos de Keycloak.
+
+4. **Flujo de integración:**
+   ```
+   Usuario accede a Odoo → Redirección a Keycloak → Autenticación exitosa → Acceso a Odoo con sesión SSO
    ```
 
-2. **Servicio de sincronización:**
-   - Crear API REST para gestión de datos compartidos
-   - Implementar webhooks en Odoo para cambios en tiempo real
-   - Desarrollar jobs de sincronización periódica
-
-3. **Dashboard analítico:**
-   - Crear aplicación web para visualización de datos
-   - Conectar a base de datos compartida (solo lectura)
-   - Implementar métricas: flujo de pacientes, ocupación, etc.
-
 #### 🧪 **Prueba funcional:**
-- Crear paciente en Odoo → Sincronización automática → Datos disponibles en dashboard analítico
-- Modificar cita → Actualización en tiempo real en todos los sistemas
+- Crear un usuario en Keycloak y asignarle un rol.
+- Iniciar sesión en Odoo con el usuario de Keycloak.
+- Verificar que el acceso y los permisos sean los correctos según el grupo asignado en Keycloak.
+- Modificar roles en Keycloak y comprobar que se reflejan en Odoo tras la sincronización.
 
 ---
 
