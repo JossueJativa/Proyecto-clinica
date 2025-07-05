@@ -22,14 +22,10 @@ services:
     restart: always
     ports:
       - "8069:8069"
-    environment:
-      HOST: postgres_odoo
-      USER: odoo
-      PASSWORD: odoo
-      DB_NAME: postgres_odoo
     volumes:
+      - ./odoo.conf:/etc/odoo/odoo.conf
+      - ./modules:/mnt/extra-addons  # Aquí van tus módulos personalizados
       - odoo_data:/var/lib/odoo
-      - odoo_addons:/mnt/extra-addons
       - odoo_logs:/var/log/odoo
     networks:
       - proyecto_net
@@ -61,21 +57,6 @@ services:
     networks:
       - proyecto_net
 
-  rabbitmq:
-    image: rabbitmq:3.13-management
-    container_name: rabbitmq
-    restart: always
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    environment:
-      RABBITMQ_DEFAULT_USER: admin
-      RABBITMQ_DEFAULT_PASS: admin
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-    networks:
-      - proyecto_net
-
 networks:
   proyecto_net:
     driver: bridge
@@ -84,8 +65,6 @@ volumes:
   odoo_postgres_data:
   odoo_data:
   odoo_addons:
-  rabbitmq_data:
-    driver: local
   keycloak_data:
     driver: local
   adminer_data:
