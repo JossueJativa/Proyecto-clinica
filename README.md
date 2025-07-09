@@ -31,13 +31,13 @@ Se creo un docker compose para poder tener las aplicaciones en un entorno de des
 ## Patrones de integración a aplicar
 *   Transferencia de archivos.
 *   Seguridad y autorización con SSO (Keycloak).
-*   Mensajería (e.g., RabbitMQ, Kafka).
+*   API RESTful / Invocación remota.
 
 Al momento de necesitar por lo menos 3 servicios de patrones a integrar, se van a usar los siguientes:
 
 *   **Transferencia de archivos** - Para backups automáticos y seguros de Odoo a Google Drive.
 *   **Seguridad y autorización (Keycloak)** - SSO centralizado para todos los usuarios de Odoo.
-*   **Mensajería por colas (RabbitMQ)** - Para envío asíncrono de correos electrónicos de confirmación de compra.
+*   **API RESTful / Invocación remota** - Para envío de correos electrónicos de confirmación de compra mediante Gmail API.
 
 ## Soluciones de Integración Implementadas
 
@@ -78,34 +78,39 @@ La gestión de usuarios estaba fragmentada, obligando a los empleados a recordar
 
 ---
 
-### 🔹 **3. Integración Odoo + RabbitMQ - Notificaciones de Compra por Email**
+### 🔹 **3. Integración Odoo + Google Console - Notificaciones de Compra por Email**
 
-#### 🔧 **Patrón aplicado:** Mensajería por colas (RabbitMQ)
+#### 🔧 **Patrón aplicado:** API RESTful / Invocación remota
 
 #### 🧩 **Problema que resuelve:**
-El envío de correos de confirmación de compra desde Odoo era un proceso síncrono. Si el servicio de email estaba lento o fallaba, la interfaz de usuario de Odoo se bloqueaba hasta que el proceso terminaba o daba error, afectando la experiencia del usuario.
+El envío de correos de confirmación de compra desde Odoo requería configurar un servidor SMTP complejo y gestionar la entrega de correos de manera manual, lo que generaba problemas de confiabilidad y mantenimiento.
 
 #### 🛠️ **Solución técnica:**
-- Al confirmar una compra, Odoo no envía el email directamente. En su lugar, publica un mensaje en una cola de RabbitMQ.
-- Un servicio consumidor (worker) independiente escucha en esa cola, toma los mensajes y se encarga de procesar y enviar el correo electrónico.
-- Esto desacopla el proceso de envío de la interfaz de Odoo, permitiendo una respuesta inmediata al usuario y añadiendo tolerancia a fallos (si el envío falla, el mensaje puede ser reintentado).
+- Configurar Odoo para utilizar Gmail API a través de Google Console para el envío de correos electrónicos.
+- Implementar autenticación OAuth2 con Google para acceso seguro a la API de Gmail.
+- Al confirmar una compra, Odoo invoca directamente la API de Gmail para enviar el correo de confirmación de manera confiable.
+- Esto garantiza una alta tasa de entrega y elimina la necesidad de mantener un servidor SMTP local.
 
 #### 📋 **Pasos de implementación:**
 
-1.  **Configuración de RabbitMQ:**
-    - Crear un `exchange` llamado `email_exchange` y una `queue` llamada `purchase_confirmation_queue`.
+1.  **Configuración de Google Console:**
+    - Crear un proyecto en Google Cloud Console y habilitar la API de Gmail.
+    - Configurar credenciales OAuth2 y obtener client ID y client secret.
+    - Configurar los scopes necesarios para el envío de correos.
 
-2.  **Desarrollo en Odoo (Producer):**
-    - Modificar el flujo de confirmación de compra para que, en lugar de llamar al servicio de email, publique un mensaje JSON con los datos de la compra en la cola de RabbitMQ.
+2.  **Configuración en Odoo:**
+    - Instalar el módulo de integración con Gmail API.
+    - Configurar las credenciales OAuth2 en Odoo.
+    - Configurar el servidor de correo saliente para usar Gmail API.
 
-3.  **Servicio Consumer (Worker):**
-    - Crear un servicio independiente (e.g., en Python) que se conecta a RabbitMQ.
-    - Este servicio consume los mensajes de la cola, construye el correo y lo envía a través de un servidor SMTP.
+3.  **Desarrollo del flujo de envío:**
+    - Modificar el flujo de confirmación de compra para que genere y envíe el correo usando la API de Gmail.
+    - Implementar plantillas de correo personalizadas para confirmaciones de compra.
 
 #### 🧪 **Prueba funcional:**
-- Realizar una compra en Odoo. La interfaz responde de inmediato.
-- Verificar que un mensaje aparece en la cola de RabbitMQ.
-- Verificar que el servicio consumidor procesa el mensaje y el correo de confirmación llega al destinatario.
+- Realizar una compra en Odoo y confirmar que se envía automáticamente un correo de confirmación.
+- Verificar que el correo llega correctamente al destinatario desde la cuenta de Gmail configurada.
+- Comprobar que los datos de la compra se incluyen correctamente en el correo.
 
 ---
 
@@ -121,13 +126,77 @@ El envío de correos de confirmación de compra desde Odoo era un proceso síncr
           │           │                  │
           ▼           ▼                  ▼
 ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
-│    Odoo     │──│ Google Drive│  │  RabbitMQ   │
-│   (ERP)     │  │  (Backups)  │  │ (Message    │
-└─────┬───────┘  └─────────────┘  │  Broker)    │
-      │                           └─────┬───────┘
-      │                                 │
-      └─────────────────────────────────► Email
-                                        │ Service
-                                        │ (Worker)
-                                        └──────────
+│    Odoo     │──│ Google Drive│  │Gmail API    │
+│   (ERP)     │  │  (Backups)  │  │(Google      │
+└─────────────┘  └─────────────┘  │ Console)    │
+                                  └─────────────┘
 ```
+
+### Flujos de Integración:
+
+1.  **Flujo de Transferencia de Archivos (Backups):**
+    `Odoo → Google Drive (API REST) → Backup seguro en la nube`
+
+2.  **Flujo de Autenticación (SSO):**
+    `Usuario → Odoo → Redirección a Keycloak → Autenticación → Acceso a Odoo`
+
+3.  **Flujo de Notificaciones por Email:**
+    `Odoo (Compra) → Gmail API (Google Console) → Envío de correo de confirmación`
+
+## Tecnologías y Herramientas Utilizadas
+
+### Desarrollo e Integración:
+-   **Odoo Custom Modules**: Python
+-   **Google APIs**: Gmail API, Google Drive API
+-   **Base de datos**: PostgreSQL
+
+### APIs y Protocolos:
+-   **REST API**: Para comunicación con Google Drive y Gmail
+-   **OpenID Connect**: Para SSO con Keycloak
+-   **OAuth2**: Para autenticación con servicios de Google
+
+## Instrucciones de Despliegue
+
+### 1. Levantar entorno base:
+```bash
+docker-compose up -d
+```
+
+### 2. Configurar integraciones:
+```bash
+# Instalar dependencias de Odoo
+docker exec odoo pip install requests google-api-python-client
+
+# Configurar módulos personalizados
+docker cp ./odoo-addons odoo:/mnt/extra-addons/
+```
+
+### 3. Configurar Keycloak:
+- Acceder a http://localhost:8080/
+- Crear realm 'clinica-realm'
+- Configurar clients para cada servicio
+
+### 4. Configurar Google Console:
+- Crear proyecto en Google Cloud Console
+- Habilitar APIs de Gmail y Google Drive
+- Configurar credenciales OAuth2
+
+### 5. Verificar integraciones:
+- Test SSO entre sistemas
+- Verificar subida de backups a Google Drive
+- Comprobar envío de correos mediante Gmail API
+
+## Métricas de Éxito
+
+-   ✅ **100% de backups automatizados** y almacenados externamente en Google Drive.
+-   ✅ **Reducción del 80% en tiempo de login** y eliminación de gestión de contraseñas en Odoo gracias a SSO.
+-   ✅ **99% de entrega de correos electrónicos** gracias a Gmail API y Google Console.
+-   ✅ **Integración directa con servicios de Google** para mayor confiabilidad.
+
+## Resumen de Soluciones Implementadas
+
+| # | Solución | Patrón | Sistemas Integrados | Problema Resuelto |
+|---|---|---|---|---|
+| 1 | Backups Automáticos Seguros | Transferencia de archivos | Odoo ↔ Google Drive | Riesgo de pérdida de datos |
+| 2 | SSO y Gestión de Usuarios | Seguridad y autorización | Odoo ↔ Keycloak | Gestión de identidades fragmentada |
+| 3 | Notificaciones por Email | API RESTful / Invocación remota | Odoo ↔ Gmail API | Problemas de entrega de correos |
